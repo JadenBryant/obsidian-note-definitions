@@ -1,36 +1,22 @@
-import {
-	Menu,
-	Notice,
-	Plugin,
-	TFolder,
-	WorkspaceWindow,
-	TFile,
-	MarkdownView,
-} from "obsidian";
-import { injectGlobals } from "./globals";
-import { logDebug } from "./util/log";
-import { definitionMarker } from "./editor/decoration";
-import { Extension } from "@codemirror/state";
-import { EditorView } from "@codemirror/view";
-import { DefManager, initDefFileManager } from "./core/def-file-manager";
-import { Definition } from "./core/model";
-import {
-	getDefinitionPopover,
-	initDefinitionPopover,
-} from "./editor/definition-popover";
-import { postProcessor } from "./editor/md-postprocessor";
-import { DEFAULT_SETTINGS, getSettings, SettingsTab } from "./settings";
-import { getMarkedWordUnderCursor } from "./util/editor";
-import {
-	FileExplorerDecoration,
-	initFileExplorerDecoration,
-} from "./ui/file-explorer";
-import { EditDefinitionModal } from "./editor/edit-modal";
-import { AddDefinitionModal } from "./editor/add-modal";
-import { initDefinitionModal } from "./editor/mobile/definition-modal";
-import { FMSuggestModal } from "./editor/frontmatter-suggest-modal";
-import { registerDefFile } from "./editor/def-file-registration";
-import { DefFileType } from "./core/file-type";
+import { Menu, Notice, Plugin, TFolder, WorkspaceWindow, TFile, MarkdownView } from 'obsidian';
+import { injectGlobals } from './globals';
+import { logDebug } from './util/log';
+import { definitionMarker } from './editor/decoration';
+import { Extension } from '@codemirror/state';
+import { EditorView } from '@codemirror/view';
+import { DefManager, initDefFileManager } from './core/def-file-manager';
+import { Definition } from './core/model';
+import { getDefinitionPopover, initDefinitionPopover } from './editor/definition-popover';
+import { postProcessor } from './editor/md-postprocessor';
+import { DEFAULT_SETTINGS, getSettings, SettingsTab } from './settings';
+import { getMarkedWordUnderCursor } from './util/editor';
+import { FileExplorerDecoration, initFileExplorerDecoration } from './ui/file-explorer';
+import { EditDefinitionModal } from './editor/edit-modal';
+import { AddDefinitionModal } from './editor/add-modal';
+import { initDefinitionModal } from './editor/mobile/definition-modal';
+import { FMSuggestModal } from './editor/frontmatter-suggest-modal';
+import { registerDefFile } from './editor/def-file-registration';
+import { DefFileType } from './core/file-type';
 
 export default class NoteDefinition extends Plugin {
 	activeEditorExtensions: Extension[] = [];
@@ -39,21 +25,12 @@ export default class NoteDefinition extends Plugin {
 
 	async onload() {
 		// Settings are injected into global object
-		const settings = Object.assign(
-			{},
-			DEFAULT_SETTINGS,
-			await this.loadData(),
-		);
+		const settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData())
 		injectGlobals(settings, this.app, window);
 
-		this.registerEvent(
-			this.app.workspace.on(
-				"window-open",
-				(win: WorkspaceWindow, newWindow: Window) => {
-					injectGlobals(settings, this.app, newWindow);
-				},
-			),
-		);
+		this.registerEvent(this.app.workspace.on('window-open', (win: WorkspaceWindow, newWindow: Window) => {
+			injectGlobals(settings, this.app, newWindow);
+		}))
 
 		logDebug("Load note definition plugin");
 
@@ -67,9 +44,7 @@ export default class NoteDefinition extends Plugin {
 		this.registerCommands();
 		this.registerEvents();
 
-		this.addSettingTab(
-			new SettingsTab(this.app, this, this.saveSettings.bind(this)),
-		);
+		this.addSettingTab(new SettingsTab(this.app, this, this.saveSettings.bind(this)));
 		this.registerMarkdownPostProcessor(postProcessor);
 
 		this.fileExplorerDeco.run();
@@ -83,23 +58,15 @@ export default class NoteDefinition extends Plugin {
 
 	registerCommands() {
 		this.addCommand({
-			id: "toggle-definition",
-			name: "Toggle definition",
+			id: "preview-definition",
+			name: "Preview definition",
 			editorCallback: (editor) => {
 				const curWord = getMarkedWordUnderCursor(editor);
 				if (!curWord) return;
-				const def =
-					window.NoteDefinition.definitions.global.get(curWord);
+				const def = window.NoteDefinition.definitions.global.get(curWord);
 				if (!def) return;
-				const popover = getDefinitionPopover();
-
-				// check if popover is already open
-				if (popover.mountedPopover) {
-					popover.close();
-				} else {
-					popover.openAtCursor(def);
-				}
-			},
+				getDefinitionPopover().openAtCursor(def);
+			}
 		});
 
 		this.addCommand({
@@ -110,8 +77,8 @@ export default class NoteDefinition extends Plugin {
 				if (!currWord) return;
 				const def = this.defManager.get(currWord);
 				if (!def) return;
-				this.app.workspace.openLinkText(def.linkText, "");
-			},
+				this.app.workspace.openLinkText(def.linkText, '');
+			}
 		});
 
 		this.addCommand({
@@ -121,7 +88,7 @@ export default class NoteDefinition extends Plugin {
 				const selectedText = editor.getSelection();
 				const addModal = new AddDefinitionModal(this.app);
 				addModal.open(selectedText);
-			},
+			}
 		});
 
 		this.addCommand({
@@ -130,14 +97,12 @@ export default class NoteDefinition extends Plugin {
 			editorCallback: (editor) => {
 				const activeFile = this.app.workspace.getActiveFile();
 				if (!activeFile) {
-					new Notice(
-						"Command must be used within an active opened file",
-					);
+					new Notice("Command must be used within an active opened file");
 					return;
 				}
 				const suggestModal = new FMSuggestModal(this.app, activeFile);
 				suggestModal.open();
-			},
+			}
 		});
 
 		this.addCommand({
@@ -146,7 +111,7 @@ export default class NoteDefinition extends Plugin {
 			callback: () => {
 				this.fileExplorerDeco.run();
 				this.defManager.loadDefinitions();
-			},
+			}
 		});
 
 		this.addCommand({
@@ -155,13 +120,11 @@ export default class NoteDefinition extends Plugin {
 			editorCallback: (_) => {
 				const activeFile = this.app.workspace.getActiveFile();
 				if (!activeFile) {
-					new Notice(
-						"Command must be used within an active opened file",
-					);
+					new Notice("Command must be used within an active opened file");
 					return;
 				}
 				registerDefFile(this.app, activeFile, DefFileType.Consolidated);
-			},
+			}
 		});
 
 		this.addCommand({
@@ -170,106 +133,92 @@ export default class NoteDefinition extends Plugin {
 			editorCallback: (_) => {
 				const activeFile = this.app.workspace.getActiveFile();
 				if (!activeFile) {
-					new Notice(
-						"Command must be used within an active opened file",
-					);
+					new Notice("Command must be used within an active opened file");
 					return;
 				}
 				registerDefFile(this.app, activeFile, DefFileType.Atomic);
-			},
-		});
+			}
+		})
 	}
 
 	registerEvents() {
-		this.registerEvent(
-			this.app.workspace.on("active-leaf-change", async (leaf) => {
-				if (!leaf) return;
-				this.reloadUpdatedDefinitions();
-				this.updateEditorExts();
-				this.defManager.updateActiveFile();
-			}),
-		);
+		this.registerEvent(this.app.workspace.on("active-leaf-change", async (leaf) => {
+			if (!leaf) return;
+			this.reloadUpdatedDefinitions();
+			this.updateEditorExts();
+			this.defManager.updateActiveFile();
+		}));
 
-		this.registerEvent(
-			this.app.workspace.on("editor-menu", (menu, editor) => {
-				const defPopover = getDefinitionPopover();
-				if (defPopover) {
-					defPopover.close();
-				}
+		this.registerEvent(this.app.workspace.on("editor-menu", (menu, editor) => {
+			const defPopover = getDefinitionPopover();
+			if (defPopover) {
+				defPopover.close();
+			}
 
-				const curWord = getMarkedWordUnderCursor(editor);
-				if (!curWord) {
-					if (editor.getSelection()) {
-						menu.addItem((item) => {
-							item.setTitle("Add definition");
-							item.setIcon("plus").onClick(() => {
-								const addModal = new AddDefinitionModal(
-									this.app,
-								);
+			const curWord = getMarkedWordUnderCursor(editor);
+			if (!curWord) {
+				if (editor.getSelection()) {
+					menu.addItem(item => {
+						item.setTitle("Add definition")
+						item.setIcon("plus")
+						.onClick(() => {
+								const addModal = new AddDefinitionModal(this.app);
 								addModal.open(editor.getSelection());
-							});
 						});
-					}
-					return;
-				}
-				const def = this.defManager.get(curWord);
-				if (!def) {
-					return;
-				}
-				this.registerMenuForMarkedWords(menu, def);
-			}),
-		);
-
-		// Add file menu options
-		this.registerEvent(
-			this.app.workspace.on("file-menu", (menu, file, source) => {
-				if (file instanceof TFolder) {
-					menu.addItem((item) => {
-						item.setTitle("Set definition folder")
-							.setIcon("book-a")
-							.onClick(() => {
-								const settings = getSettings();
-								settings.defFolder = file.path;
-								this.saveSettings();
-							});
 					});
 				}
-			}),
-		);
+				return;
+			};
+			const def = this.defManager.get(curWord);
+			if (!def) {
+				return;
+			};
+			this.registerMenuForMarkedWords(menu, def);
+		}));
+
+		// Add file menu options
+		this.registerEvent(this.app.workspace.on("file-menu", (menu, file, source) => {
+			if (file instanceof TFolder) {
+				menu.addItem(item => {
+					item.setTitle("Set definition folder")
+						.setIcon("book-a")
+						.onClick(() => {
+							const settings = getSettings();
+							settings.defFolder = file.path;
+							this.saveSettings();
+						});
+				});
+			}
+		}));
 
 		// Creating files under def folder should register file as definition file
-		this.registerEvent(
-			this.app.vault.on("create", (file) => {
-				const settings = getSettings();
-				if (file.path.startsWith(settings.defFolder)) {
-					this.fileExplorerDeco.run();
-					this.refreshDefinitions();
-				}
-			}),
-		);
+		this.registerEvent(this.app.vault.on('create', (file) => {
+			const settings = getSettings();
+			if (file.path.startsWith(settings.defFolder)) {
+				this.fileExplorerDeco.run();
+				this.refreshDefinitions();
+			}
+		}));
 
-		this.registerEvent(
-			this.app.metadataCache.on("changed", (file: TFile) => {
-				const currFile = this.app.workspace.getActiveFile();
+		this.registerEvent(this.app.metadataCache.on('changed', (file: TFile) => {
+			const currFile = this.app.workspace.getActiveFile();
+			
+			if (currFile && currFile.path === file.path) {
+				this.defManager.updateActiveFile();
 
-				if (currFile && currFile.path === file.path) {
-					this.defManager.updateActiveFile();
+				let activeView = this.app.workspace.getActiveViewOfType(MarkdownView);
 
-					let activeView =
-						this.app.workspace.getActiveViewOfType(MarkdownView);
-
-					if (activeView) {
-						// @ts-expect-error, not typed
-						const view = activeView.editor.cm as EditorView;
-						const plugin = view.plugin(definitionMarker);
-
-						if (plugin) {
-							plugin.forceUpdate();
-						}
+				if(activeView) {
+					// @ts-expect-error, not typed
+					const view = activeView.editor.cm as EditorView;
+					const plugin = view.plugin(definitionMarker);
+					
+					if (plugin) {
+						plugin.forceUpdate();
 					}
 				}
-			}),
-		);
+			}
+		}));
 	}
 
 	registerMenuForMarkedWords(menu: Menu, def: Definition) {
@@ -277,11 +226,11 @@ export default class NoteDefinition extends Plugin {
 			item.setTitle("Go to definition")
 				.setIcon("arrow-left-from-line")
 				.onClick(() => {
-					this.app.workspace.openLinkText(def.linkText, "");
+					this.app.workspace.openLinkText(def.linkText, '');
 				});
-		});
+		})
 
-		menu.addItem((item) => {
+		menu.addItem(item => {
 			item.setTitle("Edit definition")
 				.setIcon("pencil")
 				.onClick(() => {
