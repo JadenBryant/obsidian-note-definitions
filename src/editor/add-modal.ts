@@ -117,7 +117,7 @@ export class AddDefinitionModal {
 				});
 
 				// use the first definition file from this file's metadata, or default to
-				// the first folder in the list if it exists
+				// the first consolidated def file in the list if it exists
 				if (default_def_file) {
 					component.setValue(default_def_file);
 				} else if (defFiles.length > 0) {
@@ -167,22 +167,6 @@ export class AddDefinitionModal {
 					window.NoteDefinition.settings.defFileParseConfig
 						.defaultFileType,
 				);
-
-				// attempt to automatically determine the definition type we should use if there
-				// is at least one item in the definition context and the setting is enabled
-				if (
-					window.NoteDefinition.settings.defModalsConfig
-						.automaticallyDetermineNewDefTypes &&
-					paths
-				) {
-					// automatically determine the definition file type to default to based on
-					// the first item in the definition context list
-					if (paths[0] == default_def_file) {
-						component.setValue("consolidated");
-					} else if (paths[0] == default_def_folder + "/") {
-						component.setValue("atomic");
-					}
-				}
 
 				component.onChange(handleDefFileTypeChange);
 				handleDefFileTypeChange(component.getValue());
