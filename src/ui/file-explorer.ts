@@ -1,5 +1,9 @@
 import { App } from "obsidian";
-import { DEFAULT_DEF_FOLDER, getSettings, VALID_DEFINITION_FILE_TYPES } from "src/settings";
+import {
+	DEFAULT_DEF_FOLDER,
+	getSettings,
+	VALID_DEFINITION_FILE_TYPES,
+} from "src/settings";
 import { FileExplorerView } from "src/types/obsidian";
 import { logDebug } from "src/util/log";
 
@@ -36,19 +40,23 @@ export class FileExplorerDecoration {
 	}
 
 	private exec() {
-		const fileExplorer = this.app.workspace.getLeavesOfType('file-explorer')[0];
+		const fileExplorer =
+			this.app.workspace.getLeavesOfType("file-explorer")[0];
 		if (!fileExplorer) {
 			// This is an expected behaviour, likely due to
-			throw new Error("app.workspace.getLeavesOfType('file-explorer') returned undefined (file explorer may not be available in view yet)");
+			throw new Error(
+				"app.workspace.getLeavesOfType('file-explorer') returned undefined (file explorer may not be available in view yet)",
+			);
 		}
 		const fileExpView = fileExplorer.view as FileExplorerView;
 
 		const settings = getSettings();
-		Object.keys(fileExpView.fileItems).forEach(k => {
+		Object.keys(fileExpView.fileItems).forEach((k) => {
 			const fileItem = fileExpView.fileItems[k];
 
 			// Clear previously added ones (if exist)
-			const fileTags = fileItem.selfEl.getElementsByClassName("nav-file-tag");
+			const fileTags =
+				fileItem.selfEl.getElementsByClassName("nav-file-tag");
 			for (let i = 0; i < fileTags.length; i++) {
 				const fileTag = fileTags[i];
 				if (fileTag.id === DIV_ID) {
@@ -63,13 +71,20 @@ export class FileExplorerDecoration {
 				return;
 			}
 
-			if (k.startsWith(defFolder) && VALID_DEFINITION_FILE_TYPES.some(ext => k.endsWith(ext))) {
+			if (
+				k.startsWith(defFolder) &&
+				VALID_DEFINITION_FILE_TYPES.some((ext) => k.endsWith(ext))
+			) {
 				this.tagFile(fileExpView, k, "DEF");
 			}
 		});
 	}
 
-	private tagFile(explorer: FileExplorerView, filePath: string, tagContent: string) {
+	private tagFile(
+		explorer: FileExplorerView,
+		filePath: string,
+		tagContent: string,
+	) {
 		const el = explorer.fileItems[filePath];
 		if (!el) {
 			logDebug(`No file item with filepath ${filePath} found`);
@@ -86,9 +101,9 @@ export class FileExplorerDecoration {
 			cls: "nav-file-tag",
 			text: tagContent,
 			attr: {
-				id: DIV_ID
-			}
-		})
+				id: DIV_ID,
+			},
+		});
 	}
 }
 

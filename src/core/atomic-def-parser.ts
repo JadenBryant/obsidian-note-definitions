@@ -3,7 +3,6 @@ import { App, TFile } from "obsidian";
 import { Definition } from "./model";
 import { DefFileType } from "./file-type";
 
-
 export class AtomicDefParser extends BaseDefParser {
 	app: App;
 	file: TFile;
@@ -31,10 +30,12 @@ export class AtomicDefParser extends BaseDefParser {
 		}
 		const fmPos = fileMetadata?.frontmatterPosition;
 		if (fmPos) {
-			fileContent = fileContent.slice(fmPos.end.offset+1);
+			fileContent = fileContent.slice(fmPos.end.offset + 1);
 		}
 
-		aliases = aliases.concat(this.calculatePlurals([this.file.basename].concat(aliases)));
+		aliases = aliases.concat(
+			this.calculatePlurals([this.file.basename].concat(aliases)),
+		);
 
 		const def = {
 			key: this.file.basename.toLowerCase(),
@@ -44,7 +45,7 @@ export class AtomicDefParser extends BaseDefParser {
 			file: this.file,
 			linkText: `${this.file.path}`,
 			fileType: DefFileType.Atomic,
-		}
+		};
 		return [def];
 	}
 }

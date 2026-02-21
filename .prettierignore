@@ -1,0 +1,9 @@
+# Ignore docs
+**/*.md
+
+# JS files are generated, no need to format
+*.js
+*.mjs
+
+# Ignore github files
+.github/

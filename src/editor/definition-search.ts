@@ -12,12 +12,12 @@ export class LineScanner {
 	prefixTree: PTreeNode;
 
 	private cnLangRegex = /\p{Script=Han}/u;
-	private terminatingCharRegex = /[!@#$%^&*()\+={}[\]:;"'<>,.?\/|\\\r\n （）＊＋，－／：；＜＝＞＠［＼］＾＿｀｛｜｝～｟｠｢｣､　、〃〈〉《》「」『』【】〔〕〖〗〘〙〚〛〜〝〞〟—‘’‛“”„‟…‧﹏﹑﹔·。]/;
+	private terminatingCharRegex =
+		/[!@#$%^&*()\+={}[\]:;"'<>,.?\/|\\\r\n （）＊＋，－／：；＜＝＞＠［＼］＾＿｀｛｜｝～｟｠｢｣､　、〃〈〉《》「」『』【】〔〕〖〗〘〙〚〛〜〝〞〟—‘’‛“”„‟…‧﹏﹑﹔·。]/;
 
 	constructor(pTree?: PTreeNode) {
 		this.prefixTree = pTree ? pTree : getDefFileManager().getPrefixTree();
 	}
-
 
 	scanLine(line: string, offset?: number): PhraseInfo[] {
 		let traversers: PTreeTraverser[] = [];
@@ -29,7 +29,7 @@ export class LineScanner {
 				traversers.push(new PTreeTraverser(this.prefixTree));
 			}
 
-			traversers.forEach(traverser => {
+			traversers.forEach((traverser) => {
 				traverser.gotoNext(c);
 				if (traverser.isWordEnd() && this.isValidEnd(line, i)) {
 					const phrase = traverser.getWord();
@@ -42,7 +42,7 @@ export class LineScanner {
 			});
 
 			// Collect garbage traversers that hit a dead-end
-			traversers = traversers.filter(traverser => {
+			traversers = traversers.filter((traverser) => {
 				return !!traverser.currPtr;
 			});
 		}
@@ -59,7 +59,7 @@ export class LineScanner {
 			return true;
 		}
 		// Check if next character is a terminating character
-		return this.terminatingCharRegex.test(line.charAt(ptr+1));
+		return this.terminatingCharRegex.test(line.charAt(ptr + 1));
 	}
 
 	// Check if this character is a valid start of a word depending on the context
@@ -72,11 +72,10 @@ export class LineScanner {
 			return true;
 		}
 		// Check if previous character is a terminating character
-		return this.terminatingCharRegex.test(line.charAt(ptr-1))
+		return this.terminatingCharRegex.test(line.charAt(ptr - 1));
 	}
 
 	private isNonSpacedLanguage(c: string): boolean {
 		return this.cnLangRegex.test(c);
 	}
 }
-

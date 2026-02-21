@@ -39,7 +39,7 @@ export class DefManager {
 		this.consolidatedDefFiles = new Map<string, TFile>();
 		this.localDefs = new DefinitionRepo();
 
-		this.resetLocalConfigs()
+		this.resetLocalConfigs();
 		this.lastUpdate = 0;
 		this.markedDirty = [];
 
@@ -66,7 +66,9 @@ export class DefManager {
 		this.resetLocalConfigs();
 
 		if (this.activeFile) {
-			const metadataCache = this.app.metadataCache.getFileCache(this.activeFile);
+			const metadataCache = this.app.metadataCache.getFileCache(
+				this.activeFile,
+			);
 			if (!metadataCache) {
 				return;
 			}
@@ -76,7 +78,9 @@ export class DefManager {
 				return;
 			}
 			if (!Array.isArray(paths)) {
-				logWarn(`Unrecognised type for '${DEF_CTX_FM_KEY}' frontmatter`);
+				logWarn(
+					`Unrecognised type for '${DEF_CTX_FM_KEY}' frontmatter`,
+				);
 				return;
 			}
 			const flattenedPaths = this.flattenPathList(paths);
@@ -104,13 +108,13 @@ export class DefManager {
 
 	private flattenPathList(paths: string[]): string[] {
 		const filePaths: string[] = [];
-		paths.forEach(path => {
+		paths.forEach((path) => {
 			if (this.isFolderPath(path)) {
 				filePaths.push(...this.flattenFolder(path));
 			} else {
 				filePaths.push(path);
 			}
-		})
+		});
 		return filePaths;
 	}
 
@@ -119,23 +123,23 @@ export class DefManager {
 		if (path.endsWith("/")) {
 			path = path.slice(0, path.length - 1);
 		}
-		const folder = this.app.vault.getFolderByPath(path)
+		const folder = this.app.vault.getFolderByPath(path);
 		if (!folder) {
 			return [];
 		}
 		const childrenFiles = this.getChildrenFiles(folder);
-		return childrenFiles.map(file => file.path);
+		return childrenFiles.map((file) => file.path);
 	}
 
 	private getChildrenFiles(folder: TFolder): TFile[] {
 		const files: TFile[] = [];
-		folder.children.forEach(abstractFile => {
+		folder.children.forEach((abstractFile) => {
 			if (abstractFile instanceof TFolder) {
 				files.push(...this.getChildrenFiles(abstractFile));
 			} else if (abstractFile instanceof TFile) {
 				files.push(abstractFile);
 			}
-		})
+		});
 		return files;
 	}
 
@@ -146,13 +150,13 @@ export class DefManager {
 	// Expects an array of file paths (not directories)
 	private buildLocalPrefixTree(filePaths: string[]) {
 		const root = new PTreeNode();
-		filePaths.forEach(filePath => {
+		filePaths.forEach((filePath) => {
 			const defMap = this.globalDefs.getMapForFile(filePath);
 			if (!defMap) {
-				logWarn(`Unrecognised file path '${filePath}'`)
+				logWarn(`Unrecognised file path '${filePath}'`);
 				return;
 			}
-			[...defMap.keys()].forEach(key => {
+			[...defMap.keys()].forEach((key) => {
 				root.add(key, 0);
 			});
 		});
@@ -161,7 +165,7 @@ export class DefManager {
 
 	// Expects an array of file paths (not directories)
 	private buildLocalDefRepo(filePaths: string[]) {
-		filePaths.forEach(filePath => {
+		filePaths.forEach((filePath) => {
 			const defMap = this.globalDefs.getMapForFile(filePath);
 			if (defMap) {
 				this.localDefs.fileDefMap.set(filePath, defMap);
@@ -170,7 +174,10 @@ export class DefManager {
 	}
 
 	isDefFile(file: TFile): boolean {
-		return file.path.startsWith(this.getGlobalDefFolder()) && VALID_DEFINITION_FILE_TYPES.some(ext => file.path.endsWith(ext));
+		return (
+			file.path.startsWith(this.getGlobalDefFolder()) &&
+			VALID_DEFINITION_FILE_TYPES.some((ext) => file.path.endsWith(ext))
+		);
 	}
 
 	reset() {
@@ -196,7 +203,7 @@ export class DefManager {
 	}
 
 	set(def: Definition) {
-		this.globalDefs.set(def)
+		this.globalDefs.set(def);
 	}
 
 	getDefFiles(): TFile[] {
@@ -219,19 +226,21 @@ export class DefManager {
 
 		for (let file of files) {
 			if (file.stat.mtime > this.lastUpdate) {
-				logDebug(`File ${file.path} was updated, reloading definitions...`);
+				logDebug(
+					`File ${file.path} was updated, reloading definitions...`,
+				);
 				dirtyFiles.push(file.path);
 				const defs = await this.parseFile(file);
 				definitions.push(...defs);
 			}
 		}
 
-		dirtyFiles.forEach(file => {
+		dirtyFiles.forEach((file) => {
 			this.globalDefs.clearForFile(file);
 		});
 
 		if (definitions.length > 0) {
-			definitions.forEach(def => {
+			definitions.forEach((def) => {
 				this.globalDefs.set(def);
 			});
 		}
@@ -253,20 +262,24 @@ export class DefManager {
 		let globalFolder: TFolder | null = null;
 		// Retry is needed here as getFolderByPath may return null when being called on app startup
 		await retry.exec(() => {
-			globalFolder = this.app.vault.getFolderByPath(this.getGlobalDefFolder());
+			globalFolder = this.app.vault.getFolderByPath(
+				this.getGlobalDefFolder(),
+			);
 			if (!globalFolder) {
 				retry.setShouldRetry();
 			}
 		});
 
 		if (!globalFolder) {
-			logWarn("Global definition folder not found, unable to load global definitions");
-			return
+			logWarn(
+				"Global definition folder not found, unable to load global definitions",
+			);
+			return;
 		}
 
 		// Recursively load files within the global definition folder
 		const definitions = await this.parseFolder(globalFolder);
-		definitions.forEach(def => {
+		definitions.forEach((def) => {
 			this.globalDefs.set(def);
 		});
 
@@ -276,7 +289,7 @@ export class DefManager {
 
 	private async buildPrefixTree() {
 		const root = new PTreeNode();
-		this.globalDefs.getAllKeys().forEach(key => {
+		this.globalDefs.getAllKeys().forEach((key) => {
 			root.add(key, 0);
 		});
 		this.globalPrefixTree = root;
@@ -337,14 +350,14 @@ export class DefinitionRepo {
 		const keys: string[] = [];
 		this.fileDefMap.forEach((defMap, _) => {
 			keys.push(...defMap.keys());
-		})
+		});
 		return keys;
 	}
 
 	set(def: Definition) {
 		let defMap = this.fileDefMap.get(def.file.path);
 		if (!defMap) {
-			defMap = new Map<string, Definition>;
+			defMap = new Map<string, Definition>();
 			this.fileDefMap.set(def.file.path, defMap);
 		}
 		// Prefer the first encounter over subsequent collisions
@@ -354,7 +367,7 @@ export class DefinitionRepo {
 		defMap.set(def.key, def);
 
 		if (def.aliases.length > 0) {
-			def.aliases.forEach(alias => {
+			def.aliases.forEach((alias) => {
 				if (defMap) {
 					defMap.set(alias.toLowerCase(), def);
 				}

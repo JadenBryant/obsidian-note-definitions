@@ -1,4 +1,3 @@
-
 // Prefix tree node
 export class PTreeNode {
 	children: Map<string, PTreeNode>;
@@ -57,7 +56,6 @@ export class PTreeTraverser {
 	}
 
 	getWord() {
-		return this.wordBuf.join('');
+		return this.wordBuf.join("");
 	}
 }
-

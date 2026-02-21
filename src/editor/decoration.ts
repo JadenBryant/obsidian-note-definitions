@@ -1,12 +1,12 @@
 import { RangeSetBuilder } from "@codemirror/state";
 import {
-  Decoration,
-  DecorationSet,
-  EditorView,
-  PluginSpec,
-  PluginValue,
-  ViewPlugin,
-  ViewUpdate,
+	Decoration,
+	DecorationSet,
+	EditorView,
+	PluginSpec,
+	PluginValue,
+	ViewPlugin,
+	ViewUpdate,
 } from "@codemirror/view";
 import { logDebug } from "src/util/log";
 import { DEF_DECORATION_CLS, getDecorationAttrs } from "./common";
@@ -37,12 +37,16 @@ export class DefinitionMarker implements PluginValue {
 	}
 
 	update(update: ViewUpdate) {
-		if (update.docChanged || update.viewportChanged || update.focusChanged) {
+		if (
+			update.docChanged ||
+			update.viewportChanged ||
+			update.focusChanged
+		) {
 			const start = performance.now();
 			this.decorations = this.buildDecorations(update.view);
 			const end = performance.now();
-			logDebug(`Marked definitions in ${end-start}ms`)
-			return
+			logDebug(`Marked definitions in ${end - start}ms`);
+			return;
 		}
 	}
 
@@ -50,7 +54,7 @@ export class DefinitionMarker implements PluginValue {
 		const start = performance.now();
 		this.decorations = this.buildDecorations(this.editorView);
 		const end = performance.now();
-		logDebug(`Marked definitions in ${end - start}ms`)
+		logDebug(`Marked definitions in ${end - start}ms`);
 		return;
 	}
 
@@ -65,12 +69,16 @@ export class DefinitionMarker implements PluginValue {
 			phraseInfos.push(...scanText(text, from));
 		}
 
-		phraseInfos.forEach(wordPos => {
+		phraseInfos.forEach((wordPos) => {
 			const attributes = getDecorationAttrs(wordPos.phrase);
-			builder.add(wordPos.from, wordPos.to, Decoration.mark({
-				class: DEF_DECORATION_CLS,
-				attributes: attributes,
-			}));
+			builder.add(
+				wordPos.from,
+				wordPos.to,
+				Decoration.mark({
+					class: DEF_DECORATION_CLS,
+					attributes: attributes,
+				}),
+			);
 		});
 
 		markedPhrases = phraseInfos;
@@ -79,13 +87,17 @@ export class DefinitionMarker implements PluginValue {
 }
 
 // Scan text and return phrases and their positions that require decoration
-export function scanText(text: string, offset: number, pTree?: PTreeNode): PhraseInfo[] {
+export function scanText(
+	text: string,
+	offset: number,
+	pTree?: PTreeNode,
+): PhraseInfo[] {
 	let phraseInfos: PhraseInfo[] = [];
 	const lines = text.split(/\r?\n/);
 	let internalOffset = offset;
 	const lineScanner = new LineScanner(pTree);
 
-	lines.forEach(line => {
+	lines.forEach((line) => {
 		phraseInfos.push(...lineScanner.scanLine(line, internalOffset));
 		// Additional 1 char for \n char
 		internalOffset += line.length + 1;
@@ -95,12 +107,12 @@ export function scanText(text: string, offset: number, pTree?: PTreeNode): Phras
 	// This allows us to prefer longer words over shorter ones
 	phraseInfos.sort((a, b) => b.to - a.to);
 	phraseInfos.sort((a, b) => a.from - b.from);
-	return removeSubsetsAndIntersects(phraseInfos)
+	return removeSubsetsAndIntersects(phraseInfos);
 }
 
 function removeSubsetsAndIntersects(phraseInfos: PhraseInfo[]): PhraseInfo[] {
 	let cursor = 0;
-	return phraseInfos.filter(phraseInfo => {
+	return phraseInfos.filter((phraseInfo) => {
 		if (phraseInfo.from >= cursor) {
 			cursor = phraseInfo.to;
 			return true;
@@ -115,6 +127,5 @@ const pluginSpec: PluginSpec<DefinitionMarker> = {
 
 export const definitionMarker = ViewPlugin.fromClass(
 	DefinitionMarker,
-	pluginSpec
+	pluginSpec,
 );
-

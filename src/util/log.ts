@@ -13,8 +13,8 @@ const levelMap = {
 	1: "ERROR",
 	2: "WARN",
 	3: "INFO",
-	4: "DEBUG"
-}
+	4: "DEBUG",
+};
 
 // Log only if current log level is >= specified log level
 function logWithLevel(msg: string, logLevel: LogLevel) {

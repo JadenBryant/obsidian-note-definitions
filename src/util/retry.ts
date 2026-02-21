@@ -4,7 +4,7 @@ export function useRetry(retryCount?: number) {
 	let shouldRetry = false;
 	let maxRetries = retryCount ?? 3;
 	let currRetry = 0;
-	
+
 	async function exec(func: any) {
 		while (currRetry < maxRetries) {
 			const output = func();
@@ -25,5 +25,5 @@ export function useRetry(retryCount?: number) {
 	return {
 		exec,
 		setShouldRetry,
-	}
+	};
 }
