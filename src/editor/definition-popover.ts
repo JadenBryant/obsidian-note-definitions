@@ -297,7 +297,7 @@ export class DefinitionPopover extends Component {
 
 	private registerClosePopoverListeners() {
 		this.getActiveView()?.containerEl.addEventListener(
-			"keypress",
+			"keydown",
 			this.close,
 		);
 		this.getActiveView()?.containerEl.addEventListener(
