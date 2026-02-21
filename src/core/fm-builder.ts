@@ -10,11 +10,11 @@ export class FrontmatterBuilder {
 	}
 
 	finish(): string {
-		let fm = '---\n';
+		let fm = "---\n";
 		this.fm.forEach((v, k) => {
-			fm += `${k}: ${v}\n`
+			fm += `${k}: ${v}\n`;
 		});
-		fm += '---\n'
+		fm += "---\n";
 		return fm;
 	}
 }

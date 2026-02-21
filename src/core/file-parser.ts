@@ -10,7 +10,7 @@ export const DEF_TYPE_FM = "def-type";
 
 export class FileParser {
 	app: App;
-	file: TFile
+	file: TFile;
 	defFileType?: DefFileType;
 
 	constructor(app: App, file: TFile) {
@@ -25,7 +25,10 @@ export class FileParser {
 
 		switch (this.defFileType) {
 			case DefFileType.Consolidated:
-				const defParser = new ConsolidatedDefParser(this.app, this.file);
+				const defParser = new ConsolidatedDefParser(
+					this.app,
+					this.file,
+				);
 				return defParser.parseFile(fileContent);
 			case DefFileType.Atomic:
 				const atomicParser = new AtomicDefParser(this.app, this.file);
@@ -45,11 +48,14 @@ export class FileParser {
 		});
 		// @ts-ignore: fileCache should be set in the closure above
 		const fmFileType = fileCache?.frontmatter?.[DEF_TYPE_FM];
-		if (fmFileType &&
-			(fmFileType === DefFileType.Consolidated || fmFileType === DefFileType.Atomic)) {
+		if (
+			fmFileType &&
+			(fmFileType === DefFileType.Consolidated ||
+				fmFileType === DefFileType.Atomic)
+		) {
 			return fmFileType;
 		}
-		
+
 		// Fallback to configured default
 		const parserSettings = getSettings().defFileParseConfig;
 
