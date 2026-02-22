@@ -320,6 +320,35 @@ export class DefManager {
 		return def;
 	}
 
+	// Walk the definition directory to find definition files and folders
+	getDefFilesAndFolders(): [TFolder[], TFile[]] {
+		const parentDefFolder = this.app.vault.getFolderByPath(
+			this.getGlobalDefFolder(),
+		);
+		if (!parentDefFolder) {
+			logWarn("Failed to get parent def folder");
+			return [[], []];
+		}
+		return this.walkFolder(parentDefFolder);
+	}
+
+	private walkFolder(folder: TFolder): [TFolder[], TFile[]] {
+		this.globalDefFolders.set(folder.path, folder);
+		const folders = [folder];
+		const files = [];
+		for (let f of folder.children) {
+			if (f instanceof TFolder) {
+				const [childFolders, childFiles] = this.walkFolder(f);
+				folders.push(...childFolders);
+				files.push(...childFiles);
+			} else if (f instanceof TFile && this.isDefFile(f)) {
+				this.globalDefFiles.set(f.path, f);
+				files.push(f);
+			}
+		}
+		return [folders, files];
+	}
+
 	getGlobalDefFolder() {
 		return window.NoteDefinition.settings.defFolder || DEFAULT_DEF_FOLDER;
 	}
