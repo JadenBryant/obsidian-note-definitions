@@ -15,6 +15,9 @@ export class DefFileUpdater {
 	}
 
 	async updateDefinition(def: Definition) {
+		// Ensure that key is case-insensitive
+		def.key = def.key.toLowerCase();
+
 		if (def.fileType === DefFileType.Atomic) {
 			await this.updateAtomicDefFile(def);
 		} else if (def.fileType === DefFileType.Consolidated) {

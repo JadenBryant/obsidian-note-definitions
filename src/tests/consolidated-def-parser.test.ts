@@ -108,3 +108,4 @@ test("Aliases are parsed correctly", () => {
 		definitions.find((def) => def.key === "alias definition")?.aliases,
 	).toStrictEqual(["Alias1", "Alias2"]);
 });
+
