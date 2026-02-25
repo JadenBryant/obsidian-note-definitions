@@ -12,6 +12,7 @@ export interface Definition {
 	position?: FilePosition;
 }
 
+// Both to and from inclusive
 export interface FilePosition {
 	from: number;
 	to: number;

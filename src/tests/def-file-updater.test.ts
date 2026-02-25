@@ -3,7 +3,6 @@ import { DefFileUpdater } from "src/core/def-file-updater";
 import { DefFileType } from "src/core/file-type";
 import { DefManager } from "__mocks__/internals";
 
-
 jest.mock("src/core/def-file-manager", () => {
 	return {
 		getDefFileManager: () => new DefManager(),
@@ -23,20 +22,19 @@ jest.mock("src/settings", () => ({
 
 jest.mock("src/util/log");
 
-
 const app = new App();
-const defFileUpdater = new DefFileUpdater(app)
+const defFileUpdater = new DefFileUpdater(app);
 
-const vaultModify = jest.spyOn(app.vault, "modify")
+const vaultModify = jest.spyOn(app.vault, "modify");
 
 afterEach(() => {
-	jest.clearAllMocks()
-})
+	jest.clearAllMocks();
+});
 
 test("Update atomic definition", async () => {
 	const file = {
 		basename: "atomic",
-		extension: "md"
+		extension: "md",
 	} as TFile;
 	await defFileUpdater.updateDefinition({
 		key: "atomic",
@@ -45,7 +43,7 @@ test("Update atomic definition", async () => {
 		definition: "this is a test definition",
 		file: file,
 		linkText: "",
-		fileType: DefFileType.Atomic
+		fileType: DefFileType.Atomic,
 	});
 	expect(vaultModify).toHaveBeenCalledWith(file, "this is a test definition");
 });
@@ -53,7 +51,7 @@ test("Update atomic definition", async () => {
 test("Update consolidated definition", async () => {
 	const file = {
 		basename: "consolidated",
-		extension: "md"
+		extension: "md",
 	} as TFile;
 
 	const oldContent = `# oldWord
@@ -72,8 +70,7 @@ anotherDefValue
 
 # Yet another def
 
-Yet another definition
-`;
+Yet another definition`;
 	const newDefinitionText = "This is a definition, blah blah blah.";
 	const expectedNewContent = `# oldWord
 
@@ -91,8 +88,7 @@ anotherDefValue
 
 # Yet another def
 
-Yet another definition
-`;
+Yet another definition`;
 
 	jest.spyOn(app.vault, "read").mockResolvedValue(oldContent);
 	jest.spyOn(app.metadataCache, "getFileCache").mockReturnValue({});
@@ -104,7 +100,7 @@ Yet another definition
 		definition: newDefinitionText,
 		file: file,
 		linkText: "",
-		fileType: DefFileType.Consolidated
+		fileType: DefFileType.Consolidated,
 	});
 
 	expect(vaultModify).toHaveBeenCalledWith(file, expectedNewContent);
@@ -113,12 +109,13 @@ Yet another definition
 test("Add definition to consolidated file", async () => {
 	const file = {
 		basename: "consolidated",
-		extension: "md"
+		extension: "md",
 	} as TFile;
 
 	const oldContent = `---
 def-type: consolidated
 ---
+
 # Existing Def
 Existing definition.
 `;
@@ -133,28 +130,42 @@ Existing definition.
 def-type: consolidated
 ---
 # Existing Def
+
 Existing definition.
 
 ---
+
 # New Def
 
 *New Alias*
 
-This is a new definition.
-`;
+This is a new definition.`;
 
 	jest.spyOn(app.vault, "read").mockResolvedValue(oldContent);
+	jest.spyOn(app.metadataCache, "getFileCache").mockReturnValue({
+		frontmatterPosition: {
+			start: {
+				line: 0,
+				col: 0,
+				offset: 0,
+			},
+			end: {
+				line: 2,
+				col: 3,
+				offset: 30,
+			},
+		},
+	});
 
 	await defFileUpdater.addDefinition(newDef);
 
 	expect(vaultModify).toHaveBeenCalledWith(file, expectedNewContent);
 });
 
-// TODO: There is as bug here, ensure that this test case passes
 test("Add definition to empty file", async () => {
 	const file = {
 		basename: "consolidated",
-		extension: "md"
+		extension: "md",
 	} as TFile;
 
 	const oldContent = ``;
@@ -169,8 +180,7 @@ test("Add definition to empty file", async () => {
 
 *New Alias*
 
-This is a new definition.
-`;
+This is a new definition.`;
 
 	jest.spyOn(app.vault, "read").mockResolvedValue(oldContent);
 
