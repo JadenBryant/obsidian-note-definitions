@@ -48,13 +48,14 @@ test("Update atomic definition", async () => {
 	expect(vaultModify).toHaveBeenCalledWith(file, "this is a test definition");
 });
 
-test("Update consolidated definition", async () => {
-	const file = {
-		basename: "consolidated",
-		extension: "md",
-	} as TFile;
+describe("Test modifying consolidated file", () => {
+	it("Update consolidated definition", async () => {
+		const file = {
+			basename: "consolidated",
+			extension: "md",
+		} as TFile;
 
-	const oldContent = `# oldWord
+		const oldContent = `# oldWord
 
 *oldAlias*
 
@@ -71,8 +72,8 @@ anotherDefValue
 # Yet another def
 
 Yet another definition`;
-	const newDefinitionText = "This is a definition, blah blah blah.";
-	const expectedNewContent = `# oldWord
+		const newDefinitionText = "This is a definition, blah blah blah.";
+		const expectedNewContent = `# oldWord
 
 *oldAlias*
 
@@ -90,43 +91,43 @@ anotherDefValue
 
 Yet another definition`;
 
-	jest.spyOn(app.vault, "read").mockResolvedValue(oldContent);
-	jest.spyOn(app.metadataCache, "getFileCache").mockReturnValue({});
+		jest.spyOn(app.vault, "read").mockResolvedValue(oldContent);
+		jest.spyOn(app.metadataCache, "getFileCache").mockReturnValue({});
 
-	await defFileUpdater.updateDefinition({
-		key: "oldword",
-		word: "oldWord",
-		aliases: ["oldAlias"],
-		definition: newDefinitionText,
-		file: file,
-		linkText: "",
-		fileType: DefFileType.Consolidated,
+		await defFileUpdater.updateDefinition({
+			key: "oldword",
+			word: "oldWord",
+			aliases: ["oldAlias"],
+			definition: newDefinitionText,
+			file: file,
+			linkText: "",
+			fileType: DefFileType.Consolidated,
+		});
+
+		expect(vaultModify).toHaveBeenCalledWith(file, expectedNewContent);
 	});
 
-	expect(vaultModify).toHaveBeenCalledWith(file, expectedNewContent);
-});
+	it("Add definition to consolidated file", async () => {
+		const file = {
+			basename: "consolidated",
+			extension: "md",
+		} as TFile;
 
-test("Add definition to consolidated file", async () => {
-	const file = {
-		basename: "consolidated",
-		extension: "md",
-	} as TFile;
-
-	const oldContent = `---
+		const oldContent = `---
 def-type: consolidated
 ---
 
 # Existing Def
 Existing definition.
 `;
-	const newDef = {
-		word: "New Def",
-		aliases: ["New Alias"],
-		definition: "This is a new definition.",
-		file: file,
-		fileType: DefFileType.Consolidated,
-	};
-	const expectedNewContent = `---
+		const newDef = {
+			word: "New Def",
+			aliases: ["New Alias"],
+			definition: "This is a new definition.",
+			file: file,
+			fileType: DefFileType.Consolidated,
+		};
+		const expectedNewContent = `---
 def-type: consolidated
 ---
 # Existing Def
@@ -141,50 +142,51 @@ Existing definition.
 
 This is a new definition.`;
 
-	jest.spyOn(app.vault, "read").mockResolvedValue(oldContent);
-	jest.spyOn(app.metadataCache, "getFileCache").mockReturnValue({
-		frontmatterPosition: {
-			start: {
-				line: 0,
-				col: 0,
-				offset: 0,
+		jest.spyOn(app.vault, "read").mockResolvedValue(oldContent);
+		jest.spyOn(app.metadataCache, "getFileCache").mockReturnValue({
+			frontmatterPosition: {
+				start: {
+					line: 0,
+					col: 0,
+					offset: 0,
+				},
+				end: {
+					line: 2,
+					col: 3,
+					offset: 30,
+				},
 			},
-			end: {
-				line: 2,
-				col: 3,
-				offset: 30,
-			},
-		},
+		});
+
+		await defFileUpdater.addDefinition(newDef);
+
+		expect(vaultModify).toHaveBeenCalledWith(file, expectedNewContent);
 	});
 
-	await defFileUpdater.addDefinition(newDef);
+	it("Add definition to empty file", async () => {
+		const file = {
+			basename: "consolidated",
+			extension: "md",
+		} as TFile;
 
-	expect(vaultModify).toHaveBeenCalledWith(file, expectedNewContent);
-});
-
-test("Add definition to empty file", async () => {
-	const file = {
-		basename: "consolidated",
-		extension: "md",
-	} as TFile;
-
-	const oldContent = ``;
-	const newDef = {
-		word: "New Def",
-		aliases: ["New Alias"],
-		definition: "This is a new definition.",
-		file: file,
-		fileType: DefFileType.Consolidated,
-	};
-	const expectedNewContent = `# New Def
+		const oldContent = ``;
+		const newDef = {
+			word: "New Def",
+			aliases: ["New Alias"],
+			definition: "This is a new definition.",
+			file: file,
+			fileType: DefFileType.Consolidated,
+		};
+		const expectedNewContent = `# New Def
 
 *New Alias*
 
 This is a new definition.`;
 
-	jest.spyOn(app.vault, "read").mockResolvedValue(oldContent);
+		jest.spyOn(app.vault, "read").mockResolvedValue(oldContent);
 
-	await defFileUpdater.addDefinition(newDef);
+		await defFileUpdater.addDefinition(newDef);
 
-	expect(vaultModify).toHaveBeenCalledWith(file, expectedNewContent);
+		expect(vaultModify).toHaveBeenCalledWith(file, expectedNewContent);
+	});
 });
