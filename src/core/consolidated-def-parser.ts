@@ -41,6 +41,9 @@ export class ConsolidatedDefParser extends BaseDefParser {
 	}
 
 	async parseFile(fileContent?: string): Promise<Definition[]> {
+		if (fileContent === "") {
+			return [];
+		}
 		if (!fileContent) {
 			fileContent = await this.app.vault.cachedRead(this.file);
 		}
