@@ -70,6 +70,21 @@ export class ConsolidatedDefParser extends BaseDefParser {
 	private parseDoc(): DocAST {
 		const blocks = [];
 		while (this.cursor < this.fileContent.length) {
+			// Ignore leading newlines (and whitespace)
+			let c;
+			do {
+				c = this.consumeChar();
+			} while (/\s/.test(c));
+
+			// If EOF encountered, just return
+			if (c === EOF) {
+				return {
+					blocks,
+				};
+			}
+			// otherwise return character to def block
+			this.spitChar();
+
 			blocks.push(this.parseDefBlock());
 		}
 		return {
@@ -95,21 +110,17 @@ export class ConsolidatedDefParser extends BaseDefParser {
 	}
 
 	private parseHeader(): string {
-		// Ignore leading newlines
-		let h;
-		do {
-			h = this.consumeChar();
-		} while (h == "\n");
+		const h = this.consumeChar();
 
 		if (h != "#") {
 			throw new Error(
-				`Parse Header for ${this.file.path}: Unexpected character '${h}', expected '#'`,
+				`Parse Header for ${this.file.path} (at line ${this.currLine}): Unexpected character '${h}', expected '#'`,
 			);
 		}
 		let s = this.consumeChar();
 		if (s != " ") {
 			throw new Error(
-				`Parse Header for ${this.file.path}: Unexpected character '${s}', expected SPACE`,
+				`Parse Header for ${this.file.path} (at line ${this.currLine}): Unexpected character '${s}', expected SPACE`,
 			);
 		}
 
@@ -180,7 +191,8 @@ export class ConsolidatedDefParser extends BaseDefParser {
 	}
 
 	private checkDelimiter(d: string) {
-		return d === "\n---\n" || d === "\n___\n";
+		const r = /\n *((---)|(___)) *\n/;
+		return r.test(d);
 	}
 
 	// For backtracking, used for optional grammars rules
