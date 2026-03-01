@@ -11,6 +11,11 @@ const consolidatedDefData = fs.readFileSync(
 	"utf8",
 );
 
+const caseSensitiveDefData = fs.readFileSync(
+	"src/tests/def-file-samples/case-sensitve-definitions-test.md",
+	"utf8",
+);
+
 const consolidatedTrainingWhitespace = fs.readFileSync(
 	"src/tests/def-file-samples/consolidated-trailing-whitespace.md",
 	"utf8",
@@ -28,17 +33,38 @@ const parseSettings: DefFileParseConfig = {
 		dash: true,
 	},
 	autoPlurals: false,
+	enableCaseSensitive: false,
+};
+
+const caseSensitiveParseSettings: DefFileParseConfig = {
+	defaultFileType: DefFileType.Consolidated,
+	divider: {
+		underscore: true,
+		dash: true,
+	},
+	autoPlurals: false,
+	enableCaseSensitive: true,
 };
 
 const file = {
 	path: "src/tests/consolidated-definitions-test.md",
 };
+
 const parser = new ConsolidatedDefParser(
 	null as unknown as App,
 	file as TFile,
 	parseSettings,
 );
+
+const caseSensitiveParser = new ConsolidatedDefParser(
+	null as unknown as App,
+	file as TFile,
+	caseSensitiveParseSettings,
+);
+
 const definitions = parser.directParseFile(consolidatedDefData);
+const caseSensitiveDefinitions =
+	caseSensitiveParser.directParseFile(caseSensitiveDefData);
 
 describe("Valid definition file can be parsed correctly", () => {
 	it("Words of definitions are parsed correctly", async () => {
@@ -54,7 +80,7 @@ describe("Valid definition file can be parsed correctly", () => {
 		).toBeDefined();
 	});
 
-	it("Keys are stored as lowercase of words", () => {
+	it("Keys are stored as lowercase of words when case-sensitve disabled", () => {
 		expect(definitions.find((def) => def.word === "First")?.key).toBe(
 			"first",
 		);
@@ -176,5 +202,77 @@ describe("Consolidated definition file has odd formatting, but still valid synta
 		expect(
 			definitions.find((def) => def.word === "Markdown support"),
 		).toBeDefined();
+	});
+});
+
+describe("Valid definition file can be parsed correctly when case-sensitive enabled", () => {
+	it("Keys are stored with correct case when case-sensitive enabled", () => {
+		expect(
+			caseSensitiveDefinitions.find((def) => def.word === "First")?.key,
+		).toBe("First");
+		expect(
+			caseSensitiveDefinitions.find((def) => def.word === "first")?.key,
+		).toBe("first");
+		expect(
+			caseSensitiveDefinitions.find(
+				(def) => def.word === "Multiple-word definition",
+			)?.key,
+		).toBe("Multiple-word definition");
+		expect(
+			caseSensitiveDefinitions.find(
+				(def) => def.word === "Multiple-word Definition",
+			)?.key,
+		).toBe("Multiple-word Definition");
+		expect(
+			caseSensitiveDefinitions.find(
+				(def) => def.word === "Alias definition",
+			)?.key,
+		).toBe("Alias definition");
+		expect(
+			caseSensitiveDefinitions.find(
+				(def) => def.word === "alias definition",
+			)?.key,
+		).toBeUndefined;
+		expect(
+			caseSensitiveDefinitions.find(
+				(def) => def.word === "Markdown support",
+			)?.key,
+		).toBe("Markdown support");
+		expect(
+			caseSensitiveDefinitions.find(
+				(def) => def.word === "markdown support",
+			)?.key,
+		).toBeUndefined;
+	});
+
+	it("Definitions are parsed correctly when case-sensitive enabled", () => {
+		expect(
+			caseSensitiveDefinitions.find((def) => def.key === "first")
+				?.definition,
+		).toBe("This is the first definition to test basic functionality.");
+		expect(
+			caseSensitiveDefinitions.find((def) => def.key === "First")
+				?.definition,
+		).toBe("This is a different definition than the first.");
+		expect(
+			caseSensitiveDefinitions.find(
+				(def) => def.key === "Multiple-word definition",
+			)?.definition,
+		).toBe("This ensures that multiple-word definitions works.");
+		expect(
+			caseSensitiveDefinitions.find(
+				(def) => def.key === "Multiple-word Definition",
+			)?.definition,
+		).toBe("This ensures that case matters in multiple word definitions.");
+		expect(
+			caseSensitiveDefinitions.find(
+				(def) => def.key === "Alias definition",
+			)?.definition,
+		).toBe("This tests if the alias function works.");
+		expect(
+			caseSensitiveDefinitions.find(
+				(def) => def.key === "Markdown support",
+			)?.definition,
+		).toBe("Markdown syntax _should_ *work*.");
 	});
 });

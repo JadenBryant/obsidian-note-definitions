@@ -26,7 +26,7 @@ export class LineScanner {
 
 		for (let i = 0; i < line.length; i++) {
 			let c="";
-			if (getSettings().enableCaseSensitive) {
+			if (getSettings().defFileParseConfig.enableCaseSensitive) {
 				c = line.charAt(i);
 			}
 			else {
@@ -58,7 +58,7 @@ export class LineScanner {
 
 	private isValidEnd(line: string, ptr: number): boolean {
 		let c="";
-		if (getSettings().enableCaseSensitive) {
+		if (getSettings().defFileParseConfig.enableCaseSensitive) {
 			c = line.charAt(ptr);
 		}
 		else {
@@ -78,7 +78,7 @@ export class LineScanner {
 	// Check if this character is a valid start of a word depending on the context
 	private isValidStart(line: string, ptr: number): boolean {
 		let c="";
-		if (getSettings().enableCaseSensitive) {
+		if (getSettings().defFileParseConfig.enableCaseSensitive) {
 			c = line.charAt(ptr);
 		}
 		else {

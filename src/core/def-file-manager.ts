@@ -7,6 +7,7 @@ import { useRetry } from "src/util/retry";
 import { FileParser } from "./file-parser";
 import { DefFileType } from "./file-type";
 import { Definition } from "./model";
+import { getSettings } from "src/settings";
 
 let defFileManager: DefManager;
 
@@ -397,7 +398,9 @@ export class DefinitionRepo {
 
 		if (def.aliases.length > 0) {
 			def.aliases.forEach((alias) => {
-				if (defMap) {
+				if (defMap && getSettings().defFileParseConfig.enableCaseSensitive) {
+					defMap.set(alias, def);
+				} else if (defMap) {
 					defMap.set(alias.toLowerCase(), def);
 				}
 			});

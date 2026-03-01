@@ -9,7 +9,7 @@ export function getMarkedWordUnderCursor(editor: Editor) {
 }
 
 export function normaliseWord(word: string) {
-	if (getSettings().enableCaseSensitive)
+	if (getSettings().defFileParseConfig.enableCaseSensitive)
 		return word.trimStart().trimEnd();
 	else
 		return word.trimStart().trimEnd().toLowerCase();
