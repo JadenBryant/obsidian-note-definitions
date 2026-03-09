@@ -45,6 +45,7 @@ export interface Settings {
 	enableInReadingView: boolean;
 	enableOnLinks: boolean;
 	enableSpellcheck: boolean;
+	enableCaseSensitive: boolean;
 	defFolder: string;
 	popoverEvent: PopoverEventSettings;
 	defFileParseConfig: DefFileParseConfig;
@@ -59,6 +60,7 @@ export const DEFAULT_SETTINGS: Partial<Settings> = {
 	enableInReadingView: true,
 	enableOnLinks: true,
 	enableSpellcheck: true,
+	enableCaseSensitive: true,
 	popoverEvent: PopoverEventSettings.Hover,
 	defFileParseConfig: {
 		defaultFileType: DefFileType.Consolidated,
@@ -132,6 +134,17 @@ export class SettingsTab extends PluginSettingTab {
 				component.setValue(this.settings.enableSpellcheck);
 				component.onChange(async (val) => {
 					this.settings.enableSpellcheck = val;
+					await this.saveCallback();
+				});
+			});
+
+		new Setting(containerEl)
+			.setName("Enable Case Sensitivity")
+			.setDesc("Only match if the cases of both terms match")
+			.addToggle((component) => {
+				component.setValue(this.settings.enableCaseSensitive);
+				component.onChange(async (val) => {
+					this.settings.enableCaseSensitive = val;
 					await this.saveCallback();
 				});
 			});
