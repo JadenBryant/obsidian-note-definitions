@@ -28,6 +28,7 @@ export interface DefFileParseConfig {
 	defaultFileType: DefFileType;
 	divider: DividerSettings;
 	autoPlurals: boolean;
+	enableCaseSensitive: boolean;
 }
 
 export interface DefinitionPopoverConfig {
@@ -67,6 +68,7 @@ export const DEFAULT_SETTINGS: Partial<Settings> = {
 			underscore: false,
 		},
 		autoPlurals: false,
+		enableCaseSensitive: false,
 	},
 	defPopoverConfig: {
 		displayAliases: true,
@@ -132,6 +134,17 @@ export class SettingsTab extends PluginSettingTab {
 				component.setValue(this.settings.enableSpellcheck);
 				component.onChange(async (val) => {
 					this.settings.enableSpellcheck = val;
+					await this.saveCallback();
+				});
+			});
+
+		new Setting(containerEl)
+			.setName("Enable Case Sensitivity")
+			.setDesc("Only match if the cases of both terms match")
+			.addToggle((component) => {
+				component.setValue(this.settings.defFileParseConfig.enableCaseSensitive);
+				component.onChange(async (val) => {
+					this.settings.defFileParseConfig.enableCaseSensitive = val;
 					await this.saveCallback();
 				});
 			});

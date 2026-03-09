@@ -2,6 +2,17 @@ import { scanText } from "src/editor/decoration";
 import { PhraseInfo } from "src/editor/definition-search";
 import { PTreeNode } from "src/editor/prefix-tree";
 
+jest.mock("src/settings", () => ({
+	getSettings: jest.fn(() => ({
+		defFileParseConfig: {
+			enableCaseSensitive: false,
+		},
+	})),
+}));
+afterEach(() => {
+	jest.clearAllMocks();
+});
+
 const pTree = new PTreeNode();
 pTree.add("word1");
 pTree.add("word2");

@@ -216,16 +216,20 @@ export class ConsolidatedDefParser extends BaseDefParser {
 		return c;
 	}
 
-	private defBlockToDefinition(blk: DefblockAST): Definition {
-		return {
-			key: blk.header.toLowerCase(),
-			word: blk.header,
-			aliases: blk.aliases.concat(
+	private headerToKey(key: string): string {
+		return this.parseSettings.enableCaseSensitive ? key : key.toLowerCase();
+	}
+
+    private defBlockToDefinition(blk: DefblockAST): Definition {
+        return {
+            key: this.headerToKey(blk.header),
+            word: blk.header,
+            aliases: blk.aliases.concat(
 				this.calculatePlurals([blk.header].concat(blk.aliases)),
 			),
-			definition: blk.body.trim(),
-			file: this.file,
-			linkText: `${this.file.path}${blk.header ? "#" + blk.header : ""}`,
+            definition: blk.body.trim(),
+            file: this.file,
+			linkText: `${this.file.path}${blk.header ? '#' + blk.header : ''}`,
 			fileType: DefFileType.Consolidated,
 			position: {
 				from: blk.position.from,
