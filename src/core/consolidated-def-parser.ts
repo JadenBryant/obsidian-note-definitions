@@ -60,7 +60,7 @@ export class ConsolidatedDefParser extends BaseDefParser {
 	// Parse from string, no dependency on App
 	// For ease of testing
 	directParseFile(fileContent: string): Definition[] {
-		this.fileContent = fileContent;
+		this.fileContent = fileContent.replace(/\r\n?/g, "\n");
 		this.currLine = 0;
 		this.cursor = 0;
 		const doc = this.parseDoc();
@@ -220,16 +220,16 @@ export class ConsolidatedDefParser extends BaseDefParser {
 		return this.parseSettings.enableCaseSensitive ? key : key.toLowerCase();
 	}
 
-    private defBlockToDefinition(blk: DefblockAST): Definition {
-        return {
-            key: this.headerToKey(blk.header),
-            word: blk.header,
-            aliases: blk.aliases.concat(
+	private defBlockToDefinition(blk: DefblockAST): Definition {
+		return {
+			key: this.headerToKey(blk.header),
+			word: blk.header,
+			aliases: blk.aliases.concat(
 				this.calculatePlurals([blk.header].concat(blk.aliases)),
 			),
-            definition: blk.body.trim(),
-            file: this.file,
-			linkText: `${this.file.path}${blk.header ? '#' + blk.header : ''}`,
+			definition: blk.body.trim(),
+			file: this.file,
+			linkText: `${this.file.path}${blk.header ? "#" + blk.header : ""}`,
 			fileType: DefFileType.Consolidated,
 			position: {
 				from: blk.position.from,

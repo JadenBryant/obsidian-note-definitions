@@ -88,8 +88,7 @@ export default class NoteDefinition extends Plugin {
 			editorCallback: (editor) => {
 				const curWord = getMarkedWordUnderCursor(editor);
 				if (!curWord) return;
-				const def =
-					window.NoteDefinition.definitions.global.get(curWord);
+				const def = this.defManager.get(curWord);
 				if (!def) return;
 				getDefinitionPopover().openAtCursor(def);
 			},

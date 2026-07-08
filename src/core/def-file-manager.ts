@@ -66,29 +66,30 @@ export class DefManager {
 		this.activeFile = this.app.workspace.getActiveFile();
 		this.resetLocalConfigs();
 
-		if (this.activeFile) {
-			const metadataCache = this.app.metadataCache.getFileCache(
-				this.activeFile,
-			);
-			if (!metadataCache) {
-				return;
-			}
-			const paths = metadataCache.frontmatter?.[DEF_CTX_FM_KEY];
-			if (!paths) {
-				// No def-source specified
-				return;
-			}
-			if (!Array.isArray(paths)) {
-				logWarn(
-					`Unrecognised type for '${DEF_CTX_FM_KEY}' frontmatter`,
-				);
-				return;
-			}
-			const flattenedPaths = this.flattenPathList(paths);
-			this.buildLocalPrefixTree(flattenedPaths);
-			this.buildLocalDefRepo(flattenedPaths);
-			this.shouldUseLocal = true;
+		if (!this.activeFile) {
+			return;
 		}
+
+		this.shouldUseLocal = true;
+
+		const metadataCache = this.app.metadataCache.getFileCache(
+			this.activeFile,
+		);
+		if (!metadataCache) {
+			return;
+		}
+		const paths = metadataCache.frontmatter?.[DEF_CTX_FM_KEY];
+		if (!paths) {
+			// No context specified, so this note should not use any definitions.
+			return;
+		}
+		if (!Array.isArray(paths)) {
+			logWarn(`Unrecognised type for '${DEF_CTX_FM_KEY}' frontmatter`);
+			return;
+		}
+		const flattenedPaths = this.flattenPathList(paths);
+		this.buildLocalPrefixTree(flattenedPaths);
+		this.buildLocalDefRepo(flattenedPaths);
 	}
 
 	// For manually updating definition sources, as metadata cache may not be the latest updated version
@@ -251,7 +252,7 @@ export class DefManager {
 		this.lastUpdate = Date.now();
 	}
 
-	// Global configs should always be used by default
+	// Active notes default to an empty local context.
 	private resetLocalConfigs() {
 		this.localPrefixTree = new PTreeNode();
 		this.shouldUseLocal = false;
@@ -398,7 +399,10 @@ export class DefinitionRepo {
 
 		if (def.aliases.length > 0) {
 			def.aliases.forEach((alias) => {
-				if (defMap && getSettings().defFileParseConfig.enableCaseSensitive) {
+				if (
+					defMap &&
+					getSettings().defFileParseConfig.enableCaseSensitive
+				) {
 					defMap.set(alias, def);
 				} else if (defMap) {
 					defMap.set(alias.toLowerCase(), def);

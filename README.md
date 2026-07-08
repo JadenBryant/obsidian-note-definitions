@@ -9,7 +9,7 @@ A personal dictionary that can be easily looked-up from within your notes.
 1. Create a folder, right-click on the folder in your file explorer, and select `Set definition folder`. This registers the folder as your definition folder.
 2. Within the folder, create definition files (with any name of your choice).
 3. Add a definition using the `Add definition` command. This will display a pop-up modal, where you can input your definition.
-4. Once a definition is added, the word/phrase should be underlined in your notes. You may preview the definition of the word by hovering over the underlined word/phrase with the mouse, or triggering the `Preview definition` command when your cursor is on the word/phrase.
+4. Add the definition file as context for any note that should use it. Once a context is added, matching words/phrases should be underlined in that note. You may preview the definition of the word by hovering over the underlined word/phrase with the mouse, or triggering the `Preview definition` command when your cursor is on the word/phrase.
 
 ### Editor menu
 
@@ -110,12 +110,11 @@ aliases:
 > _TLDR:_ "Context" is synonymous with a definition file. By specifying a context, you specify that you want to use specific definition file(s) to source your definitions for the current note.
 
 Definition context refers to the repository of definitions that are available for the currently active note.
-By default, all notes have no context (you can think of this as being globally-scoped).
-This means that your newly-created notes will always have access to the combination of all definitions defined in your definition files.
+By default, all notes have no context.
+This means that your newly-created notes will not show definitions until you declare one or more contexts with the `def-context` property.
 
-This behaviour can be overridden by specifying the "context" of your note.
 Each definition file that you have is taken to be a separate context (hence your definitions should be structured accordingly).
-Once context(s) are declared for a note, it will only retrieve definitions from the specified contexts.
+Once context(s) are declared for a note, it will retrieve definitions from the specified contexts.
 You can think of this as having a local scope for the note.
 The note now sees only a limited subset of all your definitions.
 
@@ -130,7 +129,7 @@ You can do this multiple times to add multiple contexts.
 ### How it works
 
 `Add definition context` adds to the _properties_ of your note.
-Specifically, it adds to the `def-context` property, which is a `List` type containing a list of file paths corresponding to the selected definition files.
+Specifically, it adds to the `def-context` property, which is a `List` type containing file paths corresponding to the selected definition files.
 In source, it will look something like this:
 ```
 ---
@@ -145,7 +144,7 @@ You can edit your properties directly, although for convenience, it is recommend
 ### Removing contexts
 
 To remove contexts, simply remove the file path from the `def-context` property.
-Or if you want to remove all contexts, you can delete the `def-context` property altogether.
+Or if you want to remove all contexts, you can delete the `def-context` property altogether. The note will then stop showing definitions.
 
 ## Refreshing definitions
 
