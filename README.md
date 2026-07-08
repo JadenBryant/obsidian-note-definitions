@@ -111,7 +111,7 @@ aliases:
 
 Definition context refers to the repository of definitions that are available for the currently active note.
 By default, all notes have no context.
-This means that your newly-created notes will not show definitions until you declare one or more contexts with the `def-context` property.
+This means that your newly-created notes will not show definitions until you declare one or more contexts with the `def-context` property, or configure a tag definition context in the plugin settings.
 
 Each definition file that you have is taken to be a separate context (hence your definitions should be structured accordingly).
 Once context(s) are declared for a note, it will retrieve definitions from the specified contexts.
@@ -140,6 +140,15 @@ def-context:
 ```
 
 You can edit your properties directly, although for convenience, it is recommended to use the `Add definition context` command to add contexts as it is easy to get file paths wrong.
+
+### Tag contexts
+
+You can also map note tags to definition contexts in the plugin settings.
+Open **Tag definition contexts**, then add a link between a tag and a definition file or folder.
+Any note with that tag will use the mapped definitions.
+
+For example, mapping `#math/discrete-math` to `definitions/discrete-math.md` means every note tagged `math/discrete-math` can use definitions from that file.
+You can add multiple links for the same tag if a tag should use multiple definition files.
 
 ### Removing contexts
 

@@ -1,4 +1,4 @@
-import { App, TFile, TFolder } from "obsidian";
+import { App, CachedMetadata, getAllTags, TFile, TFolder } from "obsidian";
 import { PTreeNode } from "src/editor/prefix-tree";
 import { DEFAULT_DEF_FOLDER, VALID_DEFINITION_FILE_TYPES } from "src/settings";
 import { normaliseWord } from "src/util/editor";
@@ -8,6 +8,7 @@ import { FileParser } from "./file-parser";
 import { DefFileType } from "./file-type";
 import { Definition } from "./model";
 import { getSettings } from "src/settings";
+import { normaliseTag } from "./tag-context";
 
 let defFileManager: DefManager;
 
@@ -78,18 +79,46 @@ export class DefManager {
 		if (!metadataCache) {
 			return;
 		}
-		const paths = metadataCache.frontmatter?.[DEF_CTX_FM_KEY];
-		if (!paths) {
+		const paths = this.getActiveContextPaths(metadataCache);
+		if (paths.length === 0) {
 			// No context specified, so this note should not use any definitions.
-			return;
-		}
-		if (!Array.isArray(paths)) {
-			logWarn(`Unrecognised type for '${DEF_CTX_FM_KEY}' frontmatter`);
 			return;
 		}
 		const flattenedPaths = this.flattenPathList(paths);
 		this.buildLocalPrefixTree(flattenedPaths);
 		this.buildLocalDefRepo(flattenedPaths);
+	}
+
+	private getActiveContextPaths(metadataCache: CachedMetadata): string[] {
+		return [
+			...this.getFrontmatterContextPaths(metadataCache),
+			...this.getTagContextPaths(metadataCache),
+		].filter((path, idx, paths) => paths.indexOf(path) === idx);
+	}
+
+	private getFrontmatterContextPaths(
+		metadataCache: CachedMetadata,
+	): string[] {
+		const paths = metadataCache.frontmatter?.[DEF_CTX_FM_KEY];
+		if (!paths) {
+			return [];
+		}
+		if (!Array.isArray(paths)) {
+			logWarn(`Unrecognised type for '${DEF_CTX_FM_KEY}' frontmatter`);
+			return [];
+		}
+		return paths;
+	}
+
+	private getTagContextPaths(metadataCache: CachedMetadata): string[] {
+		const activeTags = new Set(
+			(getAllTags(metadataCache) ?? []).map(normaliseTag),
+		);
+		const tagDefinitionContexts = getSettings().tagDefinitionContexts ?? [];
+
+		return tagDefinitionContexts
+			.filter((ctx) => activeTags.has(normaliseTag(ctx.tag)))
+			.map((ctx) => ctx.path);
 	}
 
 	// For manually updating definition sources, as metadata cache may not be the latest updated version

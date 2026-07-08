@@ -6,8 +6,11 @@ import {
 	PluginSettingTab,
 	Setting,
 	setTooltip,
+	TFile,
+	TFolder,
 } from "obsidian";
 import { DefFileType } from "./core/file-type";
+import { normaliseTag, TagDefinitionContext } from "./core/tag-context";
 
 export enum PopoverEventSettings {
 	Hover = "hover",
@@ -47,6 +50,7 @@ export interface Settings {
 	enableOnLinks: boolean;
 	enableSpellcheck: boolean;
 	defFolder: string;
+	tagDefinitionContexts: TagDefinitionContext[];
 	popoverEvent: PopoverEventSettings;
 	defFileParseConfig: DefFileParseConfig;
 	defPopoverConfig: DefinitionPopoverConfig;
@@ -60,6 +64,7 @@ export const DEFAULT_SETTINGS: Partial<Settings> = {
 	enableInReadingView: true,
 	enableOnLinks: true,
 	enableSpellcheck: true,
+	tagDefinitionContexts: [],
 	popoverEvent: PopoverEventSettings.Hover,
 	defFileParseConfig: {
 		defaultFileType: DefFileType.Consolidated,
@@ -96,6 +101,7 @@ export class SettingsTab extends PluginSettingTab {
 	display(): void {
 		let { containerEl } = this;
 
+		this.settings.tagDefinitionContexts ??= [];
 		containerEl.empty();
 
 		new Setting(containerEl)
@@ -142,7 +148,9 @@ export class SettingsTab extends PluginSettingTab {
 			.setName("Enable Case Sensitivity")
 			.setDesc("Only match if the cases of both terms match")
 			.addToggle((component) => {
-				component.setValue(this.settings.defFileParseConfig.enableCaseSensitive);
+				component.setValue(
+					this.settings.defFileParseConfig.enableCaseSensitive,
+				);
 				component.onChange(async (val) => {
 					this.settings.defFileParseConfig.enableCaseSensitive = val;
 					await this.saveCallback();
@@ -165,6 +173,17 @@ export class SettingsTab extends PluginSettingTab {
 						delay: 100,
 					},
 				);
+			});
+
+		new Setting(containerEl)
+			.setName("Tag definition contexts")
+			.setDesc(
+				"Map note tags to definition files or folders. Notes with a mapped tag will use that definition context.",
+			)
+			.addButton((component) => {
+				component
+					.setButtonText("Manage")
+					.onClick(() => this.openTagContextModal());
 			});
 
 		new Setting(containerEl)
@@ -451,6 +470,140 @@ export class SettingsTab extends PluginSettingTab {
 					await this.saveCallback();
 				});
 			});
+	}
+
+	private openTagContextModal() {
+		const modal = new Modal(this.app);
+		modal.setTitle("Tag definition contexts");
+
+		const render = () => {
+			modal.contentEl.empty();
+			this.settings.tagDefinitionContexts ??= [];
+
+			const links = this.settings.tagDefinitionContexts;
+			if (links.length === 0) {
+				modal.contentEl.createDiv({
+					text: "No tag definition contexts configured.",
+				});
+			} else {
+				links.forEach((link, idx) => {
+					new Setting(modal.contentEl)
+						.setName(link.tag)
+						.setDesc(link.path)
+						.addExtraButton((component) => {
+							component
+								.setIcon("trash")
+								.setTooltip("Remove")
+								.onClick(async () => {
+									this.settings.tagDefinitionContexts =
+										links.filter((_, i) => i !== idx);
+									await this.saveCallback();
+									render();
+								});
+						});
+				});
+			}
+
+			new Setting(modal.contentEl)
+				.setName("Add tag context")
+				.setHeading();
+
+			const contextOptions = this.getDefinitionContextOptions();
+			let tag = "";
+			let path = contextOptions[0] ?? "";
+
+			new Setting(modal.contentEl)
+				.setName("Tag")
+				.setDesc("Use the note tag that should activate this context.")
+				.addText((component) => {
+					component
+						.setPlaceholder("#math/discrete-math")
+						.onChange((value) => {
+							tag = value;
+						});
+				});
+
+			new Setting(modal.contentEl)
+				.setName("Definition context")
+				.setDesc("Choose a definition file or folder.")
+				.addDropdown((component) => {
+					contextOptions.forEach((option) => {
+						component.addOption(option, option);
+					});
+					if (path) {
+						component.setValue(path);
+					}
+					component.onChange((value) => {
+						path = value;
+					});
+				});
+
+			new Setting(modal.contentEl).addButton((component) => {
+				component.setButtonText("Add").onClick(async () => {
+					const normalisedTag = normaliseTag(tag);
+					if (!normalisedTag) {
+						new Notice("Please enter a tag.");
+						return;
+					}
+					if (!path) {
+						new Notice("Please choose a definition context.");
+						return;
+					}
+					const alreadyExists =
+						this.settings.tagDefinitionContexts.some(
+							(ctx) =>
+								normaliseTag(ctx.tag) === normalisedTag &&
+								ctx.path === path,
+						);
+					if (alreadyExists) {
+						new Notice("Tag definition context already exists.");
+						return;
+					}
+
+					this.settings.tagDefinitionContexts = [
+						...this.settings.tagDefinitionContexts,
+						{
+							tag: normalisedTag,
+							path,
+						},
+					];
+					await this.saveCallback();
+					render();
+				});
+			});
+		};
+
+		render();
+		modal.open();
+	}
+
+	private getDefinitionContextOptions(): string[] {
+		const root = this.app.vault.getFolderByPath(
+			this.settings.defFolder || DEFAULT_DEF_FOLDER,
+		);
+		if (!root) {
+			return [];
+		}
+
+		const options: string[] = [];
+		const walk = (folder: TFolder) => {
+			options.push(`${folder.path}/`);
+			folder.children.forEach((child) => {
+				if (child instanceof TFolder) {
+					walk(child);
+				} else if (
+					child instanceof TFile &&
+					VALID_DEFINITION_FILE_TYPES.some((ext) =>
+						child.path.endsWith(ext),
+					)
+				) {
+					options.push(child.path);
+				}
+			});
+		};
+
+		walk(root);
+		return options;
 	}
 }
 

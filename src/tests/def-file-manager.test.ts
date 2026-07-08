@@ -7,7 +7,10 @@ import { LineScanner } from "src/editor/definition-search";
 describe("definition context", () => {
 	let app: App;
 	let activeFile: { path: string } | null;
-	let fileCache: { frontmatter?: Record<string, unknown> } | null;
+	let fileCache: {
+		frontmatter?: Record<string, unknown>;
+		tags?: Array<{ tag: string }>;
+	} | null;
 	let manager: DefManager;
 	let loadDefinitionsSpy: jest.SpyInstance;
 	let originalActiveWindow: unknown;
@@ -46,6 +49,7 @@ describe("definition context", () => {
 			NoteDefinition: {
 				definitions: {},
 				settings: {
+					tagDefinitionContexts: [],
 					defFileParseConfig: {
 						enableCaseSensitive: false,
 					},
@@ -83,6 +87,36 @@ describe("definition context", () => {
 				"def-context": ["definitions/terms.md"],
 			},
 		};
+
+		manager.updateActiveFile();
+
+		expect(manager.get("term")).toBe(definition);
+		expect(
+			new LineScanner(manager.getPrefixTree()).scanLine("term"),
+		).toEqual([
+			{
+				from: 0,
+				to: 4,
+				phrase: "term",
+			},
+		]);
+	});
+
+	test("active notes with mapped tags use the mapped definition files", () => {
+		fileCache = {
+			frontmatter: {},
+			tags: [
+				{
+					tag: "#math/discrete-math",
+				},
+			],
+		};
+		(global as any).window.NoteDefinition.settings.tagDefinitionContexts = [
+			{
+				tag: "math/discrete-math",
+				path: "definitions/terms.md",
+			},
+		];
 
 		manager.updateActiveFile();
 

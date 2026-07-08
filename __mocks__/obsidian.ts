@@ -11,7 +11,7 @@ export class App {
 export class TFile {
 	basename: string;
 	extension: string;
-	
+
 	// Ignore other properties
 }
 
@@ -31,3 +31,14 @@ export class MetadataCache {
 }
 
 export class Notice {}
+
+export function getAllTags(cache: any): string[] | null {
+	const tags = cache?.tags?.map((tag: any) => tag.tag) ?? [];
+	const fmTags = cache?.frontmatter?.tags;
+	if (Array.isArray(fmTags)) {
+		tags.push(...fmTags.map((tag: string) => `#${tag}`));
+	} else if (typeof fmTags === "string") {
+		tags.push(`#${fmTags}`);
+	}
+	return tags.length > 0 ? tags : null;
+}
