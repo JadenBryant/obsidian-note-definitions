@@ -10,6 +10,7 @@ import {
 import { Definition } from "src/core/model";
 import { getSettings, PopoverDismissType } from "src/settings";
 import { logDebug, logError } from "src/util/log";
+import { renderWikilinks, restoreRenderedWikilinkText } from "./wikilink";
 
 const DEF_POPOVER_ID = "definition-popover";
 
@@ -117,6 +118,7 @@ export class DefinitionPopover extends Component {
 			cls: "definition-popover",
 			attr: {
 				id: DEF_POPOVER_ID,
+				"data-note-definitions-popup": "true",
 				style: `visibility:hidden;${
 					popoverSettings.backgroundColour
 						? `background-color: ${popoverSettings.backgroundColour};`
@@ -140,16 +142,30 @@ export class DefinitionPopover extends Component {
 		}
 		const contentEl = el.createEl("div");
 		contentEl.setAttr("ctx", "def-popup");
+		contentEl.setAttr("data-note-definitions-popup", "true");
 
-		const currComponent = this;
-		MarkdownRenderer.render(
-			this.app,
-			def.definition,
-			contentEl,
-			normalizePath(def.file.path),
-			currComponent,
-		);
-		this.postprocessMarkdown(contentEl, def);
+		try {
+			const renderResult = MarkdownRenderer.render(
+				this.app,
+				renderWikilinks(def.definition),
+				contentEl,
+				normalizePath(def.file.path),
+				this,
+			) as Promise<void> | void;
+			this.postprocessMarkdown(contentEl, def);
+
+			if (renderResult && typeof renderResult.then === "function") {
+				void renderResult
+					.then(() => {
+						this.postprocessMarkdown(contentEl, def);
+					})
+					.catch((e) => {
+						logError(`Rendering definition markdown failed: ${e}`);
+					});
+			}
+		} catch (e) {
+			logError(`Rendering definition markdown failed: ${e}`);
+		}
 
 		if (popoverSettings.displayDefFileName) {
 			el.createEl("div", {
@@ -163,21 +179,28 @@ export class DefinitionPopover extends Component {
 	// Internal links do not work properly in the popover
 	// This is to manually open internal links
 	private postprocessMarkdown(el: HTMLDivElement, def: Definition) {
+		restoreRenderedWikilinkText(el);
+
 		const internalLinks = el.getElementsByClassName("internal-link");
 		for (let i = 0; i < internalLinks.length; i++) {
 			const linkEl = internalLinks.item(i);
 			if (linkEl) {
+				if (linkEl.getAttr("data-note-definitions-link-handled")) {
+					continue;
+				}
+				linkEl.setAttr("data-note-definitions-link-handled", "true");
 				linkEl.addEventListener("click", (e) => {
 					e.preventDefault();
-					const file = this.app.metadataCache.getFirstLinkpathDest(
-						linkEl.getAttr("href") ?? "",
-						normalizePath(def.file.path),
-					);
+					const linkText =
+						linkEl.getAttr("data-href") ?? linkEl.getAttr("href");
 					this.unmount();
-					if (!file) {
+					if (!linkText) {
 						return;
 					}
-					this.app.workspace.getLeaf().openFile(file);
+					this.app.workspace.openLinkText(
+						linkText,
+						normalizePath(def.file.path),
+					);
 				});
 			}
 		}
